@@ -32,10 +32,10 @@ namespace Microsoft.Extensions.DependencyInjection
         /// </summary>
         /// <returns>The same MultiTenantBuilder passed into the method.</returns>
         public static FinbuckleMultiTenantBuilder<TTenantInfo> WithPerTenantAuthentication<TTenantInfo>(
-            this FinbuckleMultiTenantBuilder<TTenantInfo> builder)
+            this FinbuckleMultiTenantBuilder<TTenantInfo> builder, bool runWithFlaws = false)
             where TTenantInfo : class, ITenantInfo, new()
         {
-            return WithPerTenantAuthentication(builder, _ => { });
+            return WithPerTenantAuthentication(builder, _ => { }, runWithFlaws);
         }
 
         /// <summary>
@@ -46,11 +46,11 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <returns>The same MultiTenantBuilder passed into the method.</returns>
         // ReSharper disable once MemberCanBePrivate.Global
         public static FinbuckleMultiTenantBuilder<TTenantInfo> WithPerTenantAuthentication<TTenantInfo>(
-            this FinbuckleMultiTenantBuilder<TTenantInfo> builder, Action<MultiTenantAuthenticationOptions> config)
+            this FinbuckleMultiTenantBuilder<TTenantInfo> builder, Action<MultiTenantAuthenticationOptions> config, bool runWithFlaws = false)
             where TTenantInfo : class, ITenantInfo, new()
         {
             builder.WithPerTenantAuthenticationCore(config);
-            builder.WithPerTenantAuthenticationConventions();
+            builder.WithPerTenantAuthenticationConventions(runWithFlaws);
             builder.WithRemoteAuthenticationCallbackStrategy();
 
             return builder;
@@ -63,7 +63,10 @@ namespace Microsoft.Extensions.DependencyInjection
         [SuppressMessage("ReSharper", "EmptyGeneralCatchClause")]
         public static FinbuckleMultiTenantBuilder<TTenantInfo> WithPerTenantAuthenticationConventions<TTenantInfo>(
             this FinbuckleMultiTenantBuilder<TTenantInfo> builder,
-            Action<MultiTenantAuthenticationOptions>? config = null)
+            bool runWithFlaws = false
+            
+            //Not sure what this was meant for - it's not called at all
+            /*Action<MultiTenantAuthenticationOptions>? config = null*/)
             where TTenantInfo : class, ITenantInfo, new()
         {
             // Set events to set and validate tenant for each cookie based authentication principal.
@@ -100,71 +103,78 @@ namespace Microsoft.Extensions.DependencyInjection
                 };
             });
 
-            // Set per-tenant cookie options by convention.
-            builder.WithPerTenantOptions<CookieAuthenticationOptions>((options, tc) =>
+            if (runWithFlaws)
             {
-                var d = (dynamic)tc;
-                try
-                {
-                    options.LoginPath = ((string)d.CookieLoginPath).Replace(Constants.TenantToken, tc.Identifier);
-                }
-                catch
-                {
-                }
+                //The below code configures ALL - so this will blatantly fail when you have more than 1 CookieAuthenticationOptions / OpenIdConnectOptions configured
 
-                try
-                {
-                    options.LogoutPath = ((string)d.CookieLogoutPath).Replace(Constants.TenantToken, tc.Identifier);
-                }
-                catch
-                {
-                }
 
-                try
+                // Set per-tenant cookie options by convention.
+                builder.WithPerTenantOptions<CookieAuthenticationOptions>((name, options, tc) =>
                 {
-                    options.AccessDeniedPath =
-                        ((string)d.CookieAccessDeniedPath).Replace(Constants.TenantToken, tc.Identifier);
-                }
-                catch
-                {
-                }
-            });
+                    var d = (dynamic)tc;
+                    try
+                    {
+                        options.LoginPath = ((string)d.CookieLoginPath).Replace(Constants.TenantToken, tc.Identifier);
+                    }
+                    catch
+                    {
+                    }
 
-            // Set per-tenant OpenIdConnect options by convention.
-            builder.WithPerTenantOptions<OpenIdConnectOptions>((options, tc) =>
-            {
-                var d = (dynamic)tc;
-                try
-                {
-                    options.Authority =
-                        ((string)d.OpenIdConnectAuthority).Replace(Constants.TenantToken, tc.Identifier);
-                }
-                catch
-                {
-                }
+                    try
+                    {
+                        options.LogoutPath = ((string)d.CookieLogoutPath).Replace(Constants.TenantToken, tc.Identifier);
+                    }
+                    catch
+                    {
+                    }
 
-                try
-                {
-                    options.ClientId = ((string)d.OpenIdConnectClientId).Replace(Constants.TenantToken, tc.Identifier);
-                }
-                catch
-                {
-                }
+                    try
+                    {
+                        options.AccessDeniedPath =
+                            ((string)d.CookieAccessDeniedPath).Replace(Constants.TenantToken, tc.Identifier);
+                    }
+                    catch
+                    {
+                    }
+                });
 
-                try
+                // Set per-tenant OpenIdConnect options by convention.
+                builder.WithPerTenantOptions<OpenIdConnectOptions>((name, options, tc) =>
                 {
-                    options.ClientSecret =
-                        ((string)d.OpenIdConnectClientSecret).Replace(Constants.TenantToken, tc.Identifier);
-                }
-                catch
-                {
-                }
-            });
+                    var d = (dynamic)tc;
+                    try
+                    {
+                        options.Authority =
+                            ((string)d.OpenIdConnectAuthority).Replace(Constants.TenantToken, tc.Identifier);
+                    }
+                    catch
+                    {
+                    }
+
+                    try
+                    {
+                        options.ClientId =
+                            ((string)d.OpenIdConnectClientId).Replace(Constants.TenantToken, tc.Identifier);
+                    }
+                    catch
+                    {
+                    }
+
+                    try
+                    {
+                        options.ClientSecret =
+                            ((string)d.OpenIdConnectClientSecret).Replace(Constants.TenantToken, tc.Identifier);
+                    }
+                    catch
+                    {
+                    }
+                });
+            }
 
             var challengeSchemeProp = typeof(TTenantInfo).GetProperty("ChallengeScheme");
             if (challengeSchemeProp != null && challengeSchemeProp.PropertyType == typeof(string))
             {
-                builder.WithPerTenantOptions<AuthenticationOptions>((options, tc)
+                builder.WithPerTenantOptions<AuthenticationOptions>((name, options, tc)
                     => options.DefaultChallengeScheme =
                         (string?)challengeSchemeProp.GetValue(tc) ?? options.DefaultChallengeScheme);
             }

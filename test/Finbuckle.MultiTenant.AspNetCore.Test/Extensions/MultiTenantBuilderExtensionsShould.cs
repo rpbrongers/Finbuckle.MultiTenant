@@ -369,7 +369,7 @@ namespace Finbuckle.MultiTenant.AspNetCore.Test.Extensions
             services.AddOptions();
             services.AddAuthentication().AddOpenIdConnect();
             services.AddMultiTenant<TestTenantInfo>()
-                .WithPerTenantAuthentication();
+                .WithPerTenantAuthentication(runWithFlaws: true);
             var sp = services.BuildServiceProvider();
 
             var ti1 = new TestTenantInfo
@@ -398,7 +398,7 @@ namespace Finbuckle.MultiTenant.AspNetCore.Test.Extensions
             services.AddOptions();
             services.AddAuthentication().AddOpenIdConnect();
             services.AddMultiTenant<TestTenantInfo>()
-                .WithPerTenantAuthenticationConventions();
+                .WithPerTenantAuthenticationConventions(runWithFlaws: true);
             var sp = services.BuildServiceProvider();
 
             var ti1 = new TestTenantInfo
@@ -427,7 +427,7 @@ namespace Finbuckle.MultiTenant.AspNetCore.Test.Extensions
             services.AddOptions();
             services.AddAuthentication().AddCookie();
             services.AddMultiTenant<TestTenantInfo>()
-                .WithPerTenantAuthentication();
+                .WithPerTenantAuthentication(runWithFlaws:true);
             var sp = services.BuildServiceProvider();
 
             var ti1 = new TestTenantInfo
@@ -456,7 +456,7 @@ namespace Finbuckle.MultiTenant.AspNetCore.Test.Extensions
             services.AddOptions();
             services.AddAuthentication().AddCookie();
             services.AddMultiTenant<TestTenantInfo>()
-                .WithPerTenantAuthenticationConventions();
+                .WithPerTenantAuthenticationConventions(runWithFlaws:true);
             var sp = services.BuildServiceProvider();
 
             var ti1 = new TestTenantInfo

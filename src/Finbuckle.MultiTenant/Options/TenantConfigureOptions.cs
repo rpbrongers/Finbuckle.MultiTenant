@@ -1,4 +1,4 @@
-﻿// Copyright Finbuckle LLC, Andrew White, and Contributors.
+// Copyright Finbuckle LLC, Andrew White, and Contributors.
 // Refer to the solution LICENSE file for more inforation.
 
 using System;
@@ -9,16 +9,16 @@ namespace Finbuckle.MultiTenant.Options
         where TOptions : class, new()
         where TTenantInfo : class, ITenantInfo, new()
     {
-        private readonly Action<TOptions, TTenantInfo> configureOptions;
+        private readonly Action<string, TOptions, TTenantInfo> configureOptions;
 
-        public TenantConfigureOptions(Action<TOptions, TTenantInfo> configureOptions)
+        public TenantConfigureOptions(Action<string, TOptions, TTenantInfo> configureOptions)
         {
             this.configureOptions = configureOptions;
         }
 
-        public void Configure(TOptions options, TTenantInfo tenantInfo)
+        public void Configure(string name, TOptions options, TTenantInfo tenantInfo)
         {
-            configureOptions(options, tenantInfo);
+            configureOptions(name, options, tenantInfo);
         }
     }
 }

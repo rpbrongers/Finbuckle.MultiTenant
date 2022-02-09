@@ -4,6 +4,7 @@
 //    Portions of this file are derived from the .NET Foundation source file located at:
 //    https://github.com/dotnet/runtime/blob/5aad989cebe00f0987fcb842ea5b7cbe986c67df/src/libraries/Microsoft.Extensions.Options/src/OptionsFactory.cs
 
+using System;
 using System.Collections.Generic;
 using Microsoft.Extensions.Options;
 
@@ -41,51 +42,59 @@ namespace Finbuckle.MultiTenant.Options
             _multiTenantContextAccessor = multiTenantContextAccessor;
         }
 
-        public TOptions Create(string name)
+		private static readonly object _lockMe = new object();
+
+		public TOptions Create(string name)
         {
-            var options = new TOptions();
-            foreach (var setup in _configureOptions)
-            {
-                if (setup is IConfigureNamedOptions<TOptions> namedSetup)
-                {
-                    namedSetup.Configure(name, options);
-                }
-                else if (name == Microsoft.Extensions.Options.Options.DefaultName)
-                {
-                    setup.Configure(options);
-                }
-            }
+	        var options = new TOptions();
 
-            // Configure tenant options.
-            if(_multiTenantContextAccessor?.MultiTenantContext?.TenantInfo != null)
-            {
-                foreach(var tenantConfigureOption in _tenantConfigureOptions)
-                    tenantConfigureOption.Configure(options, _multiTenantContextAccessor.MultiTenantContext.TenantInfo);
-            }
+            //essential to lock, otherwise we get 'collection modified errors 'somewhere deep' when during startup >1 request comes in.
+			//lock is greedy - it could maybe just be around the first foreach
+			lock (_lockMe) 
+			{
+				foreach (var setup in _configureOptions)
+		        {
+			        if (setup is IConfigureNamedOptions<TOptions> namedSetup)
+			        {
+				        namedSetup.Configure(name, options);
+			        }
+			        else if (name == Microsoft.Extensions.Options.Options.DefaultName)
+			        {
+				        setup.Configure(options);
+			        }
+		        }
 
-            foreach (var post in _postConfigureOptions)
-            {
-                post.PostConfigure(name, options);
-            }
+		        // Configure tenant options.
+		        if (_multiTenantContextAccessor?.MultiTenantContext?.TenantInfo != null)
+		        {
+			        foreach (var tenantConfigureOption in _tenantConfigureOptions)
+				        tenantConfigureOption.Configure(name, options, _multiTenantContextAccessor.MultiTenantContext.TenantInfo);
+		        }
 
-            if (_validations.Length > 0)
-            {
-                var failures = new List<string>();
-                foreach (IValidateOptions<TOptions> validate in _validations)
-                {
-                    ValidateOptionsResult result = validate.Validate(name, options);
-                    if (result is { Failed: true })
-                    {
-                        failures.AddRange(result.Failures);
-                    }
-                }
-                if (failures.Count > 0)
-                {
-                    throw new OptionsValidationException(name, typeof(TOptions), failures);
-                }
-            }
+				foreach (var post in _postConfigureOptions)
+		        {
+			        post.PostConfigure(name, options);
+		        }
 
-            return options;
+		        if (_validations.Length > 0)
+		        {
+			        var failures = new List<string>();
+			        foreach (IValidateOptions<TOptions> validate in _validations)
+			        {
+				        ValidateOptionsResult result = validate.Validate(name, options);
+				        if (result is { Failed: true })
+				        {
+					        failures.AddRange(result.Failures);
+				        }
+			        }
+			        if (failures.Count > 0)
+			        {
+				        throw new OptionsValidationException(name, typeof(TOptions), failures);
+			        }
+		        }
+			}
+
+			return options;
         }
     }
 }

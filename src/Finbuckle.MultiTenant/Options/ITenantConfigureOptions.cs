@@ -1,4 +1,4 @@
-﻿// Copyright Finbuckle LLC, Andrew White, and Contributors.
+// Copyright Finbuckle LLC, Andrew White, and Contributors.
 // Refer to the solution LICENSE file for more inforation.
 
 namespace Finbuckle.MultiTenant.Options
@@ -7,6 +7,6 @@ namespace Finbuckle.MultiTenant.Options
         where TOptions : class, new()
         where TTenantInfo : class, ITenantInfo, new()
     {
-        void Configure(TOptions options, TTenantInfo tenantInfo);
+        void Configure(string name, TOptions options, TTenantInfo tenantInfo);
     }
 }

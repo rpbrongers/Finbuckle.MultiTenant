@@ -27,7 +27,7 @@ namespace Finbuckle.MultiTenant.AspNetCore.Test
                         .WithBasePathStrategy()
                         .WithPerTenantAuthentication()
                         .WithInMemoryStore()
-                        .WithPerTenantOptions<AuthenticationOptions>((ao, ti) =>
+                        .WithPerTenantOptions<AuthenticationOptions>((name,ao, ti) =>
                         {
                             ao.DefaultChallengeScheme = ti.Identifier + "Scheme";
                         });

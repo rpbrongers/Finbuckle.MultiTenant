@@ -140,7 +140,7 @@ namespace Finbuckle.MultiTenant.Test.DependencyInjection
             services.AddSingleton(accessor.Object);
             var builder = new FinbuckleMultiTenantBuilder<TenantInfo>(services);
             // Note: using MultiTenantBuilderShould as our test options class.
-            builder.WithPerTenantOptions<MultiTenantBuilderShould>((o, _) => o.TestProperty = 1);
+            builder.WithPerTenantOptions<MultiTenantBuilderShould>((name, o, _) => o.TestProperty = 1);
             var sp = services.BuildServiceProvider();
 
             sp.GetRequiredService<IOptionsMonitorCache<MultiTenantBuilderShould>>();

@@ -23,7 +23,7 @@ namespace Microsoft.Extensions.DependencyInjection
         /// </summary>
         /// <param name="tenantConfigureOptions">The configuration action to be run for each tenant.</param>
         /// <returns>The same MultiTenantBuilder passed into the method.</returns>
-        public FinbuckleMultiTenantBuilder<TTenantInfo> WithPerTenantOptions<TOptions>(Action<TOptions, TTenantInfo> tenantConfigureOptions) where TOptions : class, new()
+        public FinbuckleMultiTenantBuilder<TTenantInfo> WithPerTenantOptions<TOptions>(Action<string, TOptions, TTenantInfo> tenantConfigureOptions) where TOptions : class, new()
         {
             if (tenantConfigureOptions == null)
             {
