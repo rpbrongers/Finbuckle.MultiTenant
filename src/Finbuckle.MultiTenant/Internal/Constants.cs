@@ -3,9 +3,9 @@
 
 namespace Finbuckle.MultiTenant.Internal
 {
-    internal static class Constants
+    public static class Constants
     {
-        public static int TenantIdMaxLength = 64;
-        public static string TenantToken = "__tenant__";
+        public const int TenantIdMaxLength = 64;
+        public const string TenantToken = "__tenant__";
     }
 }
